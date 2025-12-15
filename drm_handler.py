@@ -458,34 +458,29 @@ async def drm_handler(bot: Client, m: Message):
                         for msg in failure_msgs:
                             await msg.delete()
                             
-                    else:
-                        try:
-                            safe_namef = re.sub(r'[^a-zA-Z0-9\s]', '', namef).replace(' ', '_')
-                            if not safe_namef:  # Agar naam khali rah gaya toh
-                                safe_namef = f"pdf_{str(count).zfill(3)}"
-                                     
-                            pdf_filename = f"{safe_namef}.pdf"
-                                    
-                            # IMPORTANT: Utkarsh ke liye yeh headers add karo
-                             headers = {
-                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                               'Referer': 'https://utkarshapp.com/'
-                        }
-                                    
-                         response = requests.get(url, headers=headers, stream=True, timeout=30)
-                         response.raise_for_status()  # Error check
-        
-                         with open(pdf_filename, 'wb') as f:
-                              for chunk in response.iter_content(chunk_size=8192):
-                                 f.write(chunk)
-                        
-                        copy = await bot.send_photo(chat_id=channel_id, photo=f'{namef}.{ext}', caption=ccimg)
-                        count += 1
-                        os.remove(f'{namef}.{ext}')
-                    except FloodWait as e:
-                        await m.reply_text(str(e))
-                        time.sleep(e.x)
-                        continue    
+                   # DIRECT DOWNLOAD WITH HEADERS (Utkarsh fix)
+safe_namef = re.sub(r'[^a-zA-Z0-9]', '', namef).replace(' ', '_')
+if not safe_namef:  # Agar naam khali rah gaya toh
+    safe_namef = f"pdf_{str(count).zfill(3)}"
+
+pdf_filename = f"{safe_namef}.pdf"
+
+# IMPORTANT: Utkarsh ke liye yeh headers add karo
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Referer': 'https://utkarshapp.com/'
+}
+
+response = requests.get(url, headers=headers, stream=True, timeout=30)
+response.raise_for_status()  # Error check
+
+with open(pdf_filename, 'wb') as f:
+    for chunk in response.iter_content(chunk_size=8192):
+        f.write(chunk)
+
+copy = await bot.send_document(chat_id=channel_id, document=pdf_filename, caption=cc1)
+count += 1
+os.remove(pdf_filename)
 
                 elif any(ext in url for ext in [".mp3", ".wav", ".m4a"]):
                     try:
