@@ -460,16 +460,50 @@ async def drm_handler(bot: Client, m: Message):
                             
                     else:
                         try:
-                            cmd = f'yt-dlp -o "{namef}.pdf" "{url}"'
-                            download_cmd = f"{cmd} -R 25 --fragment-retries 25"
-                            os.system(download_cmd)
-                            copy = await bot.send_document(chat_id=channel_id, document=f'{namef}.pdf', caption=cc1)
+                            # DIRECT DOWNLOAD WITH HEADERS (Utkarsh fix)
+
+                            safe_namef = re.sub(r'[^a-zA-Z0-9 ]', '', namef).strip().replace(' ', '_')
+                            if not safe_namef:
+                                safe_namef = f"pdf_{str(count).zfill(3)}"
+
+                            pdf_filename = f"{safe_namef}.pdf"
+
+                            headers = {
+                                "User-Agent": "Mozilla/5.0",
+                                "Referer": "https://utkarshapp.com/"
+                            }
+
+                            response = requests.get(url, headers=headers, stream=True, timeout=30)
+                            response.raise_for_status()
+
+                            with open(pdf_filename, "wb") as f:
+                                for chunk in response.iter_content(8192):
+                                    if chunk:
+                                        f.write(chunk)
+
+                            await bot.send_document(
+                                chat_id=channel_id,
+                                document=pdf_filename,
+                                caption=cc1
+                            )
+
                             count += 1
-                            os.remove(f'{namef}.pdf')
+                            os.remove(pdf_filename)
+
                         except FloodWait as e:
                             await m.reply_text(str(e))
                             time.sleep(e.x)
-                            continue    
+                            continue
+
+                        except Exception as e:
+                            await bot.send_message(
+                                channel_id,
+                                f"⚠️ PDF Download Failed\n"
+                                f"Name: {name1}\n"
+                                f"Error: {str(e)[:150]}"
+                            )
+                            count += 1
+                            continue
            
                 elif any(ext in url for ext in [".jpg", ".jpeg", ".png"]):
                     try:
