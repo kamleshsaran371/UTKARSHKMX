@@ -461,23 +461,24 @@ async def drm_handler(bot: Client, m: Message):
                     else:
                         try:
                             safe_namef = re.sub(r'[^a-zA-Z0-9\s]', '', namef).replace(' ', '_')
-                            cmd = f'yt-dlp -o "{safe_namef}.pdf" "{url}"'
-                            download_cmd = f"{cmd} -R 25 --fragment-retries 25"
-                            os.system(download_cmd)
-                            copy = await bot.send_document(chat_id=channel_id, document=f'{safe_namef}.pdf', caption=cc1)
-                            count += 1
-                            os.remove(f'{safe_namef}.pdf')
-                        except FloodWait as e:
-                            await m.reply_text(str(e))
-                            time.sleep(e.x)
-                            continue    
-           
-                elif any(ext in url for ext in [".jpg", ".jpeg", ".png"]):
-                    try:
-                        ext = url.split('.')[-1]
-                        cmd = f'yt-dlp -o "{namef}.{ext}" "{url}"'
-                        download_cmd = f"{cmd} -R 25 --fragment-retries 25"
-                        os.system(download_cmd)
+                            if not safe_namef:  # Agar naam khali rah gaya toh
+                            safe_namef = f"pdf_{str(count).zfill(3)}"
+                                     
+                            pdf_filename = f"{safe_namef}.pdf"
+                                    
+                            # IMPORTANT: Utkarsh ke liye yeh headers add karo
+                             headers = {
+                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                               'Referer': 'https://utkarshapp.com/'
+                        }
+                                    
+                         response = requests.get(url, headers=headers, stream=True, timeout=30)
+                         response.raise_for_status()  # Error check
+        
+                         with open(pdf_filename, 'wb') as f:
+                              for chunk in response.iter_content(chunk_size=8192):
+                                 f.write(chunk)
+                        
                         copy = await bot.send_photo(chat_id=channel_id, photo=f'{namef}.{ext}', caption=ccimg)
                         count += 1
                         os.remove(f'{namef}.{ext}')
