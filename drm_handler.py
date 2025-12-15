@@ -460,12 +460,13 @@ async def drm_handler(bot: Client, m: Message):
                             
                     else:
                         try:
-                            cmd = f'yt-dlp -o "{namef}.pdf" "{url}"'
+                            safe_namef = re.sub(r'[^a-zA-Z0-9\s]', '', namef).replace(' ', '_')
+                            cmd = f'yt-dlp -o "{safe_namef}.pdf" "{url}"'
                             download_cmd = f"{cmd} -R 25 --fragment-retries 25"
                             os.system(download_cmd)
-                            copy = await bot.send_document(chat_id=channel_id, document=f'{namef}.pdf', caption=cc1)
+                            copy = await bot.send_document(chat_id=channel_id, document=f'{safe_namef}.pdf', caption=cc1)
                             count += 1
-                            os.remove(f'{namef}.pdf')
+                            os.remove(f'{safe_namef}.pdf')
                         except FloodWait as e:
                             await m.reply_text(str(e))
                             time.sleep(e.x)
