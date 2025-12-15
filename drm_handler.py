@@ -462,7 +462,7 @@ async def drm_handler(bot: Client, m: Message):
                         try:
                             safe_namef = re.sub(r'[^a-zA-Z0-9\s]', '', namef).replace(' ', '_')
                             if not safe_namef:  # Agar naam khali rah gaya toh
-                            safe_namef = f"pdf_{str(count).zfill(3)}"
+                                safe_namef = f"pdf_{str(count).zfill(3)}"
                                      
                             pdf_filename = f"{safe_namef}.pdf"
                                     
